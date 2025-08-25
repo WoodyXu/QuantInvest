@@ -94,6 +94,8 @@ if __name__ == "__main__":
         name = index_info
         code = index_dict[index_info]
 
+        cur_daily_df = None
+
         if name.split("-")[0] == "港股":
             cur_daily_df = ak.stock_hk_index_daily_em(symbol=code)[["date", "latest"]]
             cur_daily_df.columns = ["date", "close"]
