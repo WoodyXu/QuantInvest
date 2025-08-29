@@ -21,6 +21,11 @@ index_dict = {
     "A股-上证指数": "sh000001",
     "A股-创业板指": "sz399006",
     "A股-全指信息": "sh000993",
+    "A股-中证500": "sh000905",
+    "A股-全指医药": "sh000991",
+    "A股-全指消费": "sh000990",
+    "A股-中证红利": "sh000922",
+    "A股-沪深300": "sh000300",
 }
 
 start_date = "2015-01-01"
@@ -96,12 +101,15 @@ if __name__ == "__main__":
 
         cur_daily_df = None
 
-        if name.split("-")[0] == "港股":
+        if name.split("-")[0] == "港股" and code in ak.stock_hk_index_spot_em()["代码"]:
             cur_daily_df = ak.stock_hk_index_daily_em(symbol=code)[["date", "latest"]]
             cur_daily_df.columns = ["date", "close"]
         
         elif name.split("-")[0] == "A股":
             cur_daily_df = ak.stock_zh_index_daily_em(symbol=code)[["date", "close"]]
+            print(name + '\n\n')
+            print(cur_daily_df.tail())
         
-        cur_daily_df = calculate_ma60_and_deviation(cur_daily_df, date_column="date", close_column="close")
-        plot_and_save_deviation(cur_daily_df, start_date, name)
+        if cur_daily_df is not None:
+            cur_daily_df = calculate_ma60_and_deviation(cur_daily_df, date_column="date", close_column="close")
+            plot_and_save_deviation(cur_daily_df, start_date, name)
