@@ -107,8 +107,6 @@ if __name__ == "__main__":
         
         elif name.split("-")[0] == "A股":
             cur_daily_df = ak.stock_zh_index_daily_em(symbol=code)[["date", "close"]]
-            print(name + '\n\n')
-            print(cur_daily_df.tail())
         
         if cur_daily_df is not None:
             cur_daily_df = calculate_ma60_and_deviation(cur_daily_df, date_column="date", close_column="close")
