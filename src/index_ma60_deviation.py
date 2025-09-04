@@ -10,25 +10,12 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
+from config.index_code import index_dict
+from config.consts import START_DATE
 
 # 设置中文字体支持
 plt.rcParams['font.sans-serif'] = ['PingFang SC', 'Heiti SC', 'SimHei', 'Arial Unicode MS', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
-
-index_dict = {
-    "港股-恒生指数": "HSI",
-
-    "A股-上证指数": "sh000001",
-    "A股-创业板指": "sz399006",
-    "A股-全指信息": "sh000993",
-    "A股-中证500": "sh000905",
-    "A股-全指医药": "sh000991",
-    "A股-全指消费": "sh000990",
-    "A股-中证红利": "sh000922",
-    "A股-沪深300": "sh000300",
-}
-
-start_date = "2015-01-01"
 
 def calculate_ma60_and_deviation(df, date_column="date", close_column="close"):
     """
@@ -48,24 +35,24 @@ def calculate_ma60_and_deviation(df, date_column="date", close_column="close"):
     df['deviation'] = (df[close_column] - df['ma60']) / df['ma60']
     return df
 
-def plot_and_save_deviation(df, start_date_str, name, date_column="date", deviation_column="deviation"):
+def plot_and_save_deviation(df, START_DATE_str, name, date_column="date", deviation_column="deviation"):
     """
     该函数用于绘制并保存指数ma60偏离度的折线图。
 
     参数:
     df (pandas.DataFrame): 包含日期和偏离度数据的 DataFrame。
-    start_date_str (str): 开始日期，格式为 'yyyy-mm-dd'。
+    START_DATE_str (str): 开始日期，格式为 'yyyy-mm-dd'。
     name (str): 指数名称。
 
     返回:
     None
     """
     # 将输入的字符串日期转换为 pandas 的 Timestamp 对象
-    start_date = pd.Timestamp(start_date_str)
+    START_DATE = pd.Timestamp(START_DATE_str)
     latest_date = df[date_column].max()
     
     # 筛选出指定日期范围内的数据
-    filtered_df = df[(df[date_column] >= start_date) & (df[date_column] <= latest_date)]
+    filtered_df = df[(df[date_column] >= START_DATE) & (df[date_column] <= latest_date)]
     
     # 创建绘图窗口
     plt.figure(figsize=(12, 6), dpi=300)
@@ -88,11 +75,13 @@ def plot_and_save_deviation(df, start_date_str, name, date_column="date", deviat
     # 设置 x 轴刻度标签的字体大小和旋转角度
     plt.xticks(fontsize=8, rotation=45)
     plt.grid(True)
+    
     # 保存图片到当前目录
     current_dir = os.path.dirname(os.path.abspath(__file__))
     filename = '{}MA60偏离度_{}.png'.format(name, latest_date.strftime("%Y-%m-%d"))
     filepath = os.path.join(current_dir, filename)
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
+    plt.close()
 
 if __name__ == "__main__":
     for index_info in index_dict:
@@ -110,4 +99,4 @@ if __name__ == "__main__":
         
         if cur_daily_df is not None:
             cur_daily_df = calculate_ma60_and_deviation(cur_daily_df, date_column="date", close_column="close")
-            plot_and_save_deviation(cur_daily_df, start_date, name)
+            plot_and_save_deviation(cur_daily_df, START_DATE, name)
