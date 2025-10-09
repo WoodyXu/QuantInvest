@@ -91,8 +91,11 @@ if __name__ == "__main__":
         cur_daily_df = None
 
         if name.split("-")[0] == "港股":
-            cur_daily_df = ak.stock_hk_index_daily_em(symbol=code)[["date", "latest"]]
-            cur_daily_df.columns = ["date", "close"]
+            try:
+                cur_daily_df = ak.stock_hk_index_daily_em(symbol=code)[["date", "latest"]]
+                cur_daily_df.columns = ["date", "close"]
+            except Exception as e:
+                print(f"获取港股 {name} ({code}) 数据失败: {e}")
         
         elif name.split("-")[0] == "A股":
             cur_daily_df = ak.stock_zh_index_daily_em(symbol=code)[["date", "close"]]
