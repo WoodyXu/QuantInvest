@@ -54,6 +54,14 @@ def plot_and_save_deviation(df, START_DATE_str, name, date_column="date", deviat
     # 筛选出指定日期范围内的数据
     filtered_df = df[(df[date_column] >= START_DATE) & (df[date_column] <= latest_date)]
     
+    # 获取有有效deviation值的最早日期（确保有足够数据计算MA60）
+    valid_data = filtered_df.dropna(subset=[deviation_column])
+    if not valid_data.empty:
+        actual_start_date = valid_data[date_column].min()
+    else:
+        # 如果没有有效数据，使用过滤后数据的最早日期
+        actual_start_date = filtered_df[date_column].min()
+    
     # 创建绘图窗口
     plt.figure(figsize=(12, 6), dpi=300)
     
@@ -68,9 +76,9 @@ def plot_and_save_deviation(df, START_DATE_str, name, date_column="date", deviat
     # 将纵轴标签设置为百分比格式
     plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter(1))
     
-    # 设置 x 轴范围，确保只显示到最新日期
+    # 设置 x 轴范围，自适应每个指数的实际数据起始日期和最新日期
     ax = plt.gca()
-    ax.set_xlim(left=START_DATE, right=latest_date)
+    ax.set_xlim(left=actual_start_date, right=latest_date)
     
     # 设置 x 轴的刻度和日期格式
     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[6, 12]))
