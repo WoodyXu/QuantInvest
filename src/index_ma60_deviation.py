@@ -68,18 +68,50 @@ def plot_and_save_deviation(df, START_DATE_str, name, date_column="date", deviat
     # 将纵轴标签设置为百分比格式
     plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter(1))
     
+    # 设置 x 轴范围，确保只显示到最新日期
+    ax = plt.gca()
+    ax.set_xlim(left=START_DATE, right=latest_date)
+    
     # 设置 x 轴的刻度和日期格式
-    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(bymonth=[6, 12]))
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[6, 12]))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    
+    # 获取自动生成的刻度列表并过滤掉超过最新日期的刻度
+    current_ticks = ax.get_xticks()
+    current_ticks = [tick for tick in current_ticks if tick <= mdates.date2num(latest_date)]
+    ax.set_xticks(current_ticks)
     
     # 设置 x 轴刻度标签的字体大小和旋转角度
     plt.xticks(fontsize=8, rotation=45)
     plt.grid(True)
     
-    # 保存图片到当前目录
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 在最新日期的坐标点附近添加两行文本：日期和百分比数值
+    # 获取最新日期的偏离度值
+    latest_deviation = filtered_df.iloc[-1][deviation_column]
+    
+    # 设置文本样式：红色加粗，大小适中
+    text_props = dict(color='red', fontweight='bold', fontsize=10)
+    
+    # 计算文本位置（最新日期右侧一点）
+    text_x = latest_date
+    text_y = latest_deviation
+    
+    # 添加日期文本（第一行）
+    ax.text(text_x, text_y, f'{latest_date.strftime("%Y-%m-%d")}', 
+            ha='left', va='bottom', **text_props)
+    
+    # 添加百分比数值文本（第二行）
+    ax.text(text_x, text_y - 0.01, f'{latest_deviation:.2%}', 
+            ha='left', va='top', **text_props)
+    
+    # 保存图片到与src同一层级的pics/目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件所在的src目录
+    parent_dir = os.path.dirname(current_dir)  # 获取src的父目录
+    pics_dir = os.path.join(parent_dir, 'pics')  # 创建与src同一层级的pics目录
+    # 创建pics目录如果不存在
+    os.makedirs(pics_dir, exist_ok=True)
     filename = '{}MA60偏离度_{}.png'.format(name, latest_date.strftime("%Y-%m-%d"))
-    filepath = os.path.join(current_dir, filename)
+    filepath = os.path.join(pics_dir, filename)
     plt.savefig(filepath, dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -92,8 +124,7 @@ if __name__ == "__main__":
 
         if name.split("-")[0] == "港股":
             try:
-                cur_daily_df = ak.stock_hk_index_daily_em(symbol=code)[["date", "latest"]]
-                cur_daily_df.columns = ["date", "close"]
+                cur_daily_df = ak.stock_hk_index_daily_sina(symbol=code)[["date", "close"]]
             except Exception as e:
                 print(f"获取港股 {name} ({code}) 数据失败: {e}")
         
