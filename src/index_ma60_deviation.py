@@ -4,6 +4,7 @@
 #################################################
 
 import os
+import time
 import akshare as ak
 import pandas as pd
 from datetime import datetime
@@ -12,6 +13,21 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
 from config.index_code import index_dict
 from config.consts import START_DATE
+
+# 设置请求头，模拟浏览器访问
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1'
+}
+
+# 应用请求头到akshare的requests会话
+ak.__version__  # 确保akshare已初始化
+if hasattr(ak, 'session'):
+    for key, value in headers.items():
+        ak.session.headers[key] = value
 
 # 设置中文字体支持
 plt.rcParams['font.sans-serif'] = ['PingFang SC', 'Heiti SC', 'SimHei', 'Arial Unicode MS', 'DejaVu Sans']
@@ -137,7 +153,36 @@ if __name__ == "__main__":
                 print(f"获取港股 {name} ({code}) 数据失败: {e}")
         
         elif name.split("-")[0] == "A股":
-            cur_daily_df = ak.stock_zh_index_daily_em(symbol=code)[["date", "close"]]
+            max_retries = 3
+            retry_interval = 2  # 秒
+            data_sources = [
+                (ak.stock_zh_index_daily, "stock_zh_index_daily"),  # 首选，速度快
+                (ak.stock_zh_index_daily_tx, "stock_zh_index_daily_tx"),  # 备选，速度慢但可靠
+                (ak.stock_zh_index_daily_em, "stock_zh_index_daily_em")  # 最后尝试
+            ]
+            
+            for func, source_name in data_sources:
+                print(f"尝试使用 {source_name} 获取 {name} 数据...")
+                
+                for attempt in range(max_retries):
+                    try:
+                        cur_daily_df = func(symbol=code)[["date", "close"]]
+                        print(f"成功使用 {source_name} 获取 {name} 数据")
+                        break
+                    except Exception as e:
+                        print(f"使用 {source_name} 获取A股 {name} ({code}) 数据失败 (尝试 {attempt+1}/{max_retries}): {e}")
+                        if attempt < max_retries - 1:
+                            print(f"等待 {retry_interval} 秒后重试...")
+                            time.sleep(retry_interval)
+                        else:
+                            print(f"已达到最大重试次数，尝试下一个数据源")
+                            cur_daily_df = None
+                
+                if cur_daily_df is not None:
+                    break
+            
+            if cur_daily_df is None:
+                print(f"所有数据源都失败，放弃获取 {name} 数据")
         
         if cur_daily_df is not None:
             cur_daily_df = calculate_ma60_and_deviation(cur_daily_df, date_column="date", close_column="close")

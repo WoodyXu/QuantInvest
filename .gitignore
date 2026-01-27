@@ -1,0 +1,34 @@
+# 系统文件
+.DS_Store
+
+# 数据目录
+data/
+
+# 图片目录
+pics/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+
+# 编辑器配置
+.vscode/
+.idea/
+
+# 日志文件
+*.log
+
+# 其他临时文件
+*.swp
+*.swo
+*~
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
